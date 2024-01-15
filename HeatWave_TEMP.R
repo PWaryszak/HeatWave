@@ -33,7 +33,6 @@ HOBO_temp_data_1$Treatment[HOBO_temp_data_1$Treatment== "CC"]<- "Chamber only"  
 #Filter out HOBO loggers used in Susanna Venn's heatwave experiment:
 hobo_match <- read_excel("MASTER_HeatWave_HoboData.xlsx", sheet = "LoggerID_Freya2Venn") #Use matched spreadsheet where Venn HOBO with Freya's HOBO
 
-
 HOBO_temp_data_2 <- HOBO_temp_data_1 %>% #To filter out 16 out 27 HOBO loggers used in Susanna's heat wave experiment:
   filter(HOBO %in% hobo_match$HOBO)
 
@@ -52,17 +51,18 @@ HOBO_temps <- HOBO_temp_data_2 %>% mutate(
       date_time >='2022-03-08 08:00:00'& date_time <'2022-03-09 08:00:00'~ "7"
     )}) %>%       #adding day number of experiment 
   filter(!(HOBO== "HB2"|
-             HOBO == "HB5"))%>% #filter out HB2 and HB5 as the heater in block 8 died
+             HOBO == "HB14"))%>% #filter out HB2 and HB14 as the heater in block 8 died
   spread(
     HOBO, Air_temp  ) %>%               # creating wide df, averaging across all 24 HOBO loggers ([,4:28])
   filter(
     date_time>'2022-03-02 14:00:00'& 
-      date_time <'2022-03-08 07:30:00')%>%  #filtering out to days between 2-8 Mar
+      date_time <'2022-03-08 07:30:00') %>%  #filtering out to days between 2-8 Mar
+
   mutate(
     average =
-      rowMeans(.[,4:16], na.rm = T)) %>% #adding averages across treatments 
+      rowMeans(.[,4:17], na.rm = T)) %>%  #adding averages across treatments 
   
-  .[,c(1:3,19)] %>%  # filtering out raw data to only leave averages
+  .[,c(1:3,18)] %>%  # filtering out raw data to only leave averages
   
   mutate(
     time =
@@ -107,7 +107,7 @@ HOBO_temps2 <- HOBO_temps %>%
 
 ### labels to get right time stamps in the graph
 my_labels<- c("08:00:00", "14:00:00", "20:00:00","02:00:00","08:00:00","06:00:00")
-my_labels<- c("08:00", "14:00", "20:00","02:00","08:00","06:00")
+my_labels<- c("08:00", "14:00", "20:00","02:00","08:00","14:00")
 
 ### adding levels to Treatment variable to get Legend in preferred order:
 unique(HOBO_temps2$Treatment)
@@ -117,12 +117,15 @@ unique(HOBO_temps2$Treatment)
 ggplot(HOBO_temps2, 
        aes(x=time_3, 
            y= average,
-           color= Treatment , 
-           linetype = Day )) +
+           color= Day , 
+           linetype = Treatment )) +
   geom_line(alpha=0)+
   geom_smooth(method = "gam", formula = y ~ s(x, bs="tp", k =5), se = F) + # k=5 is my current fave but could adjust depending on desired smoothing effect \
-  scale_color_manual(values = c( "#009E70","#D55E00"))+
-  scale_linetype_manual(values=c("dotted","dashed","solid"))+
+  scale_color_manual(values = c( "#1b9e77","#d95f02","#7570b3"))+ #old color vaules for Treatment = (values = c( "#009E70","#D55E00"))
+  scale_linetype_manual(values=c("dashed","solid"))+
+  
+   scale_size_manual("type", values = c(5, 3), guide = "none")+
+  
   theme_bw()+
   
   ggtitle("")+ #Heat Wave Experiment
@@ -136,10 +139,11 @@ ggplot(HOBO_temps2,
   labs(y = (bquote(Air~Temperature~("\u00B0"~C))))+ #this created a sqaure=#xlab = expression("Temperature " ( degree*C))
   
   scale_x_datetime(name = "Time (hh:mm)", 
-                   breaks = date_breaks("2 hours"),
-    labels = date_format("%H:%M"),               
-    #labels = my_labels , #edit away if you want to change lables on x-axis
+                   breaks = date_breaks("6 hours"),
+    #labels = date_format("%H:%M"),               
+    labels = my_labels , #edit away if you want to change lables on x-axis
                    expand = c(0,0))+
+  
   theme(axis.text.x=element_text(vjust=0.5,size=16, color="black"),
         axis.text.y=element_text(size=16, color="black"),
         axis.title.y=element_text(size=20),
@@ -155,10 +159,16 @@ ggplot(HOBO_temps2,
     legend.title = element_text(size = 14, face = "bold"))
 
 
-ggsave(file= "HeatWave_Temperature_Plot_Simpler2200.jpg", width = 13, height = 7)
+ggsave(file= "HeatWave_Temperature_Plot_Simpler2200_14Loggers_V2.jpg", width = 13, height = 7)
 
 
 
+
+
+----------------------------------------------------
+
+
+  
 #Supplementary Graph HEAT WAVE TEMP with GAM on:============  
 #This figure can go to supplementary to show the temp variation before smoothing effet of GAM:
 
